@@ -2,7 +2,7 @@ package com.acb.map;
 
 public class CustomMap<K, V> {
 
-    private Entry<K, V>[] buckets;
+    private Node<K, V>[] buckets;
     private int capacity; // 16
 
     private int size = 0;
@@ -15,35 +15,35 @@ public class CustomMap<K, V> {
 
     public CustomMap(int capacity) {
         this.capacity = capacity;
-        this.buckets = new Entry[this.capacity];
+        this.buckets = new Node[this.capacity];
     }
 
     public void put(K key, V value) {
         if (size == lf * capacity) {
             // rehash
-            Entry<K, V>[] old = buckets;
+            Node<K, V>[] old = buckets;
 
             capacity *= 2;
             size = 0;
-            buckets = new Entry[capacity];
+            buckets = new Node[capacity];
 
-            for (Entry<K,V> e: old) {
+            for (Node<K,V> e: old) {
                 while (e != null) {
                     put(e.key, e.value);
                     e = e.next;
                 }
             }
         }
-        Entry<K, V> entry = new Entry<>(key, value, null);
+        Node<K, V> node = new Node<>(key, value, null);
 
         int bucket = getHash(key) % getBucketSize();
 
-        Entry<K, V> existing = buckets[bucket];
+        Node<K, V> existing = buckets[bucket];
         if (existing == null) {
-            buckets[bucket] = entry;
+            buckets[bucket] = node;
             size++;
         } else {
-            // compare the keys see if key already exists
+            // compare the keys to see if key already exists
             while (existing.next != null) {
                 if (existing.key.equals(key)) {
                     existing.value = value;
@@ -55,14 +55,14 @@ public class CustomMap<K, V> {
             if (existing.key.equals(key)) {
                 existing.value = value;
             } else {
-                existing.next = entry;
+                existing.next = node;
                 size++;
             }
         }
     }
 
     public V get(K key) {
-        Entry<K, V> bucket = buckets[getHash(key) % getBucketSize()];
+        Node<K, V> bucket = buckets[getHash(key) % getBucketSize()];
 
         while (bucket != null) {
             if (key.equals(bucket.key)) {
@@ -88,67 +88,17 @@ public class CustomMap<K, V> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (Entry entry : buckets) {
+        for (Node node : buckets) {
             sb.append("[");
-            while (entry != null) {
-                sb.append(entry);
-                if (entry.next != null) {
+            while (node != null) {
+                sb.append(node);
+                if (node.next != null) {
                     sb.append(", ");
                 }
-                entry = entry.next;
+                node = node.next;
             }
             sb.append("]");
         }
         return "{" + sb.toString() + "}";
-    }
-
-    static class Entry<K, V> {
-        final K key;
-        V value;
-        Entry<K, V> next;
-
-        public Entry(K key, V value, Entry<K, V> next) {
-            this.key = key;
-            this.value = value;
-            this.next = next;
-        }
-
-        public K getKey() {
-            return key;
-        }
-
-        public V getValue() {
-            return value;
-        }
-
-        public Entry<K, V> getNext() {
-            return next;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) return true;
-
-            if (obj instanceof Entry) {
-                Entry entry = (Entry) obj;
-
-                return key.equals(entry.getKey()) &&
-                        value.equals(entry.getValue());
-            }
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            int hash = 13;
-            hash = 17 * hash + ((key == null) ? 0 : key.hashCode());
-            hash = 17 * hash + ((value == null) ? 0 : value.hashCode());
-            return hash;
-        }
-
-        @Override
-        public String toString() {
-            return "{" + key + ", " + value + "}";
-        }
     }
 }
